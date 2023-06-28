@@ -57,4 +57,16 @@ jp_data = shotchartdetail.ShotChartDetail(
 
 # print(json.loads(jp_data.get_json()))
 
-print(get_json(jp_id, "2022-23", "Regular Season"))
+d = get_json(jp_id, "2022-23", "Regular Season")
+print(type(d["resultSets"]))
+print(d["resultSets"][0]["rowSet"][0])
+s = set()
+for shot in d["resultSets"][0]["rowSet"]:
+    s.add(shot[11])
+print(s)
+
+df = pd.DataFrame(d["resultSets"][0]["rowSet"])
+df.columns = d["resultSets"][0]["headers"]
+
+print(df)
+
