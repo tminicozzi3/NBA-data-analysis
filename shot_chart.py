@@ -63,8 +63,10 @@ def draw_court(d, color = "black"):
     # https://official.nba.com/rule-no-1-court-dimensions-equipment/
     # our hoop will be at (0,0)
     plt.xlim(-250,250)
-    plt.ylim(470 - 54.2, 54.2)
-    
+    plt.ylim(470 - 54.2, - 54.2)
+    # use image as court instead of drawing lines
+    court = plt.imread("warriors-court.png")
+    plt.imshow(court, extent = [-250, 250, 470 - 54.2, - 54.2])
     plt.scatter(d["LOC_X"], d["LOC_Y"], alpha = .3)
     plt.show()
 
