@@ -26,7 +26,7 @@ def get_player_id(player_name):
     else:
         return -1
 
-def get_df(player_id, year, regular_or_post_season, team_id = 0):
+def get_df(player_id, year, regular_or_post_season, context, team_id = 0):
     """
     inputs:
         team_id: int, default is 0 (looks at all shots player takes no matter team they are on)
@@ -34,6 +34,7 @@ def get_df(player_id, year, regular_or_post_season, team_id = 0):
         year: str, of the form yyyy-yy
         regular_or_post_season: str, either "Regular Season", "Playoffs", "Pre Season"
             or "All Star"
+        context: str, see shotchartdetail github documentation
     output:
         json file containing requested data
     """
@@ -42,7 +43,8 @@ def get_df(player_id, year, regular_or_post_season, team_id = 0):
         team_id=team_id,
         player_id=player_id,
         season_nullable=year,
-        season_type_all_star=regular_or_post_season
+        season_type_all_star=regular_or_post_season,
+        context_measure_simple = context
     )
     data_json = json.loads(data.get_json())
 
@@ -67,17 +69,21 @@ def draw_court(d, color = "black"):
     # use image as court instead of drawing lines
     court = plt.imread("warriors-court.png")
     plt.imshow(court, extent = [-250, 250, 470 - 54.2, - 54.2])
-    plt.scatter(d["LOC_X"], d["LOC_Y"], alpha = .3)
+    d_make = d[d.SHOT_MADE_FLAG == 1]
+    d_miss = d[d.SHOT_MADE_FLAG == 0]
+    plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
+    plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
     plt.show()
 
 
 jp_id = get_player_id("jordan poole")
 
-d = get_df(jp_id, "2022-23", "Regular Season")
+d = get_df(jp_id, "2022-23", "Regular Season", "FGA")
 
 print(d)
 
 print(d["LOC_Y"])
 print(d["LOC_X"], d["SHOT_ZONE_AREA"])
+print(d["SHOT_MADE_FLAG"])
 
 draw_court(d)
