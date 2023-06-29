@@ -26,7 +26,7 @@ def get_player_id(player_name):
     else:
         return -1
 
-def get_json(player_id, year, regular_or_post_season, team_id = 0):
+def get_df(player_id, year, regular_or_post_season, team_id = 0):
     """
     inputs:
         team_id: int, default is 0 (looks at all shots player takes no matter team they are on)
@@ -37,36 +37,35 @@ def get_json(player_id, year, regular_or_post_season, team_id = 0):
     output:
         json file containing requested data
     """
+    # get the json -> python dictionary using shotchartdetail
     data = shotchartdetail.ShotChartDetail(
         team_id=team_id,
         player_id=player_id,
         season_nullable=year,
         season_type_all_star=regular_or_post_season
     )
-    return json.loads(data.get_json())
+    data_json = json.loads(data.get_json())
+
+    # get the dataframe from the dictionary
+    rows = data_json["resultSets"][0]["rowSet"]
+    df = pd.DataFrame(rows)
+    df.columns = data_json["resultSets"][0]["headers"]
+    return df
+
+def draw_court():
+    """
+    inputs:
+        x
+    output:
+        shot chart, matplotlib plot
+    """
+    pass
+
 
 jp_id = get_player_id("jordan poole")
-print(jp_id)
 
-jp_data = shotchartdetail.ShotChartDetail(
-    team_id=0,
-    player_id=jp_id,
-    season_nullable='2022-23',
-    season_type_all_star='Regular Season'
-)
+d = get_df(jp_id, "2022-23", "Regular Season")
 
-# print(json.loads(jp_data.get_json()))
+print(d)
 
-d = get_json(jp_id, "2022-23", "Regular Season")
-print(type(d["resultSets"]))
-print(d["resultSets"][0]["rowSet"][0])
-s = set()
-for shot in d["resultSets"][0]["rowSet"]:
-    s.add(shot[11])
-print(s)
-
-df = pd.DataFrame(d["resultSets"][0]["rowSet"])
-df.columns = d["resultSets"][0]["headers"]
-
-print(df)
-
+print(d["LOC_X"])
