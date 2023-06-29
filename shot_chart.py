@@ -87,3 +87,7 @@ print(d["LOC_X"], d["SHOT_ZONE_AREA"])
 print(d["SHOT_MADE_FLAG"])
 
 draw_court(d)
+
+# ideas...
+# percentage by location, defender (height??), home vs away (lots of players), assisted vs not
+# compared to league avgs!!! - remember this is in data
