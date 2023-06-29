@@ -52,14 +52,21 @@ def get_df(player_id, year, regular_or_post_season, team_id = 0):
     df.columns = data_json["resultSets"][0]["headers"]
     return df
 
-def draw_court():
+def draw_court(d, color = "black"):
     """
     inputs:
         x
     output:
         shot chart, matplotlib plot
     """
-    pass
+    # dimensions of court found using NBA rule book
+    # https://official.nba.com/rule-no-1-court-dimensions-equipment/
+    # our hoop will be at (0,0)
+    plt.xlim(-250,250)
+    plt.ylim(470 - 54.2, 54.2)
+    
+    plt.scatter(d["LOC_X"], d["LOC_Y"], alpha = .3)
+    plt.show()
 
 
 jp_id = get_player_id("jordan poole")
@@ -68,4 +75,7 @@ d = get_df(jp_id, "2022-23", "Regular Season")
 
 print(d)
 
-print(d["LOC_X"])
+print(d["LOC_Y"])
+print(d["LOC_X"], d["SHOT_ZONE_AREA"])
+
+draw_court(d)
