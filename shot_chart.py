@@ -69,22 +69,48 @@ def draw_court(d, color = "black"):
     # use image as court instead of drawing lines
     court = plt.imread("warriors-court.png")
     plt.imshow(court, extent = [-250, 250, 470 - 54.2, - 54.2])
-    d_make = d[d.SHOT_MADE_FLAG == 1]
-    d_miss = d[d.SHOT_MADE_FLAG == 0]
-    plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
-    plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
+    # look at percentages by zone
+    zones = []
+    for pos in set(d["SHOT_ZONE_AREA"]):
+        for dis in set(d["SHOT_ZONE_BASIC"]):
+            if dis != "In The Paint (Non-RA)":
+                zones.append((pos, dis))
+    zones.append(("", "In The Paint (Non-RA)"))
+    for pos, dis in zones:
+        if pos:
+            d_make = d[(d["SHOT_MADE_FLAG"] == 1) & (d["SHOT_ZONE_AREA"] == pos)
+                & (d["SHOT_ZONE_BASIC"] == dis)]
+            d_miss = d[(d["SHOT_MADE_FLAG"] == 0) & (d["SHOT_ZONE_AREA"] == pos)
+                & (d["SHOT_ZONE_BASIC"] == dis)]
+        else:
+            d_make = d[(d["SHOT_MADE_FLAG"] == 1) & (d["SHOT_ZONE_BASIC"] == dis)]
+            d_miss = d[(d["SHOT_MADE_FLAG"] == 0) & (d["SHOT_ZONE_BASIC"] == dis)]
+        if len(d_make)+len(d_miss) != 0:
+            plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
+            plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
+            plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
+                pd.concat([d_make, d_miss])["LOC_Y"].mean(),
+                    str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
+                        color = "black")
+    
+    # d_make = d[d.SHOT_MADE_FLAG == 1]
+    # d_miss = d[d.SHOT_MADE_FLAG == 0]
+    # plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
+    # plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
     plt.show()
 
 
-jp_id = get_player_id("jordan poole")
+jp_id = get_player_id("giannis antetokounmpo")
 
 d = get_df(jp_id, "2022-23", "Regular Season", "FGA")
 
 print(d)
 
 print(d["LOC_Y"])
-print(d["LOC_X"], d["SHOT_ZONE_AREA"])
+print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
 print(d["SHOT_MADE_FLAG"])
+print(set(d["SHOT_ZONE_BASIC"]))
+print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
 
 draw_court(d)
 
