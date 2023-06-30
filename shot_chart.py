@@ -100,7 +100,7 @@ def draw_court(d, color = "black"):
     plt.show()
 
 
-jp_id = get_player_id("stephen curry")
+jp_id = get_player_id("kyrie irving")
 
 d = get_df(jp_id, "2022-23", "Regular Season", "FGA")
 
@@ -111,9 +111,15 @@ print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
 print(d["SHOT_MADE_FLAG"])
 print(set(d["SHOT_ZONE_BASIC"]))
 print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
+print(players.find_players_by_full_name("jordan poole"))
 
 draw_court(d)
 
 # ideas...
+# make zones uniform
+# use player index to find height
 # percentage by location, defender (height??), home vs away (lots of players), assisted vs not
+# open vs contested
 # compared to league avgs!!! - remember this is in data
+# analyze teams in this way
+# ... have a ton of functions that perform different analysis
