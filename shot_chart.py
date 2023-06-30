@@ -91,7 +91,7 @@ def draw_court(d, color = "black"):
             plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
                 pd.concat([d_make, d_miss])["LOC_Y"].mean(),
                     str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
-                        color = "black")
+                        color = "black", fontsize = 12.0, fontweight = "bold")
     
     # d_make = d[d.SHOT_MADE_FLAG == 1]
     # d_miss = d[d.SHOT_MADE_FLAG == 0]
@@ -100,7 +100,7 @@ def draw_court(d, color = "black"):
     plt.show()
 
 
-jp_id = get_player_id("giannis antetokounmpo")
+jp_id = get_player_id("stephen curry")
 
 d = get_df(jp_id, "2022-23", "Regular Season", "FGA")
 
