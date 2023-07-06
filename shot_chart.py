@@ -127,7 +127,8 @@ draw_court(d)
 # make zones uniform
 # use player index to find height
 # percentage by location, defender (height??), home vs away (lots of players), assisted vs not
-# open vs contested
+# open vs contested, time left in game, regular season vs playoffs
+# option for lots of seasons, both reg and playoffs (all data)!!! (do this first)
 # compared to league avgs!!! - remember this is in data
 # analyze teams in this way
 # ... have a ton of functions that perform different analysis
