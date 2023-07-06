@@ -71,11 +71,19 @@ def draw_court(d, color = "black"):
     plt.imshow(court, extent = [-250, 250, 470 - 54.2, - 54.2])
     # look at percentages by zone
     zones = []
+    # each zone of interest is a combo of SHOT_ZONE_AREA:
+    # {'Center(C)', 'Right Side Center(RC)', 'Left Side Center(LC)',
+    # 'Right Side(R)', 'Back Court(BC)', 'Left Side(L)'}
+    # and SHOT_ZONE_BASIC:
+    # {'Backcourt', 'Restricted Area', 'Above the Break 3', 'Right Corner 3',
+    # 'Left Corner 3', 'In The Paint (Non-RA)', 'Mid-Range'}
     for pos in set(d["SHOT_ZONE_AREA"]):
         for dis in set(d["SHOT_ZONE_BASIC"]):
             if dis != "In The Paint (Non-RA)":
                 zones.append((pos, dis))
+    # only want one zone for shots in the paint outside of RA
     zones.append(("", "In The Paint (Non-RA)"))
+    # loop through each zone to find makes and misses in each zone
     for pos, dis in zones:
         if pos:
             d_make = d[(d["SHOT_MADE_FLAG"] == 1) & (d["SHOT_ZONE_AREA"] == pos)
@@ -86,17 +94,16 @@ def draw_court(d, color = "black"):
             d_make = d[(d["SHOT_MADE_FLAG"] == 1) & (d["SHOT_ZONE_BASIC"] == dis)]
             d_miss = d[(d["SHOT_MADE_FLAG"] == 0) & (d["SHOT_ZONE_BASIC"] == dis)]
         if len(d_make)+len(d_miss) != 0:
+            # scatter shots on chart
             plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
             plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
+            # add percentage in each zone of interest
+            # the text shows up where the avaerage shot in that zone was taken from
             plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
                 pd.concat([d_make, d_miss])["LOC_Y"].mean(),
                     str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
                         color = "black", fontsize = 12.0, fontweight = "bold")
     
-    # d_make = d[d.SHOT_MADE_FLAG == 1]
-    # d_miss = d[d.SHOT_MADE_FLAG == 0]
-    # plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
-    # plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
     plt.show()
 
 
