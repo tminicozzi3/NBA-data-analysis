@@ -57,9 +57,10 @@ def get_df(player_id, year, regular_or_post_season, context, team_id = 0):
 def draw_court(d, color = "black"):
     """
     inputs:
-        x
+        d: dataframe, which will be generated from the function get_df
+        color: color of the text
     output:
-        shot chart, matplotlib plot
+        shot chart, which is a matplotlib plot
     """
     # dimensions of court found using NBA rule book
     # https://official.nba.com/rule-no-1-court-dimensions-equipment/
@@ -102,7 +103,7 @@ def draw_court(d, color = "black"):
             plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
                 pd.concat([d_make, d_miss])["LOC_Y"].mean(),
                     str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
-                        color = "black", fontsize = 12.0, fontweight = "bold")
+                        color = color, fontsize = 12.0, fontweight = "bold")
     
     plt.show()
 
