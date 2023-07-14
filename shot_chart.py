@@ -26,7 +26,7 @@ def get_player_id(player_name):
     else:
         return -1
 
-def get_df(player_id, years, season_types, context, team_id = 0):
+def get_df_all_shots(player_id, years, season_types, context, team_id = 0):
     """
     inputs:
         team_id: int, default is 0 (looks at all shots player takes no matter team they are on)
@@ -127,11 +127,20 @@ def shot_chart(d, basic_or_expected, color = "black"):
                             color = color, fontsize = 12.0, fontweight = "bold")
     plt.show()
 
+def graph_setup(d):
+    """
+    """
+    # two dataframes (inputted from other functions...h/a, w/l, etc)
+    # for each
+    # for loop, loop through disctances, calculaate percentage, and add to plot
+    plt.show()
+    print(set(d["SHOT_DISTANCE"]))
+
 
 if __name__ == '__main__':
-    jp_id = get_player_id("stephen curry")
+    jp_id = get_player_id("jordan poole")
 
-    d = get_df(jp_id, ["2021-22", "2022-23"], ["Regular Season", "Playoffs"], "FGA")
+    d = get_df_all_shots(jp_id, ["2021-22", "2022-23"], ["Regular Season", "Playoffs"], "FGA")
 
     print(d)
 
@@ -143,10 +152,11 @@ if __name__ == '__main__':
     print(players.find_players_by_full_name("jordan poole"))
 
     shot_chart(d, "expected")
+    graph_setup(d)
 
     # ideas...
     # graph by shot distance!!
-    # w/l, home/road, clutch time, regular season/playoffs
+    # w/l, (favored/not favored), home/road, clutch time, regular season/playoffs
     # expected value by location
     # where is data on closest defender??
     # compared to league avgs!!! - remember this is in data
