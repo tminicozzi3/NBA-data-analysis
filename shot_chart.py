@@ -26,41 +26,51 @@ def get_player_id(player_name):
     else:
         return -1
 
-def get_df(player_id, year, regular_or_post_season, context, team_id = 0):
+def get_df(player_id, years, season_types, context, team_id = 0):
     """
     inputs:
         team_id: int, default is 0 (looks at all shots player takes no matter team they are on)
         player_id: int, id number of player in data
-        year: str, of the form yyyy-yy
-        regular_or_post_season: str, either "Regular Season", "Playoffs", "Pre Season"
+        year: list of str, of the form yyyy-yy
+        regular_or_post_season: list of str, either "Regular Season", "Playoffs", "Pre Season"
             or "All Star"
         context: str, see shotchartdetail github documentation
     output:
         json file containing requested data
     """
-    # get the json -> python dictionary using shotchartdetail
-    data = shotchartdetail.ShotChartDetail(
-        team_id=team_id,
-        player_id=player_id,
-        season_nullable=year,
-        season_type_all_star=regular_or_post_season,
-        context_measure_simple = context
-    )
-    data_json = json.loads(data.get_json())
+    # acculumate list of all dataframes
+    list_df = []
+    # loop to get all desired data
+    for year in years:
+        for season_type in season_types:
+            # get the json -> python dictionary using shotchartdetail
+            data = shotchartdetail.ShotChartDetail(
+                team_id=team_id,
+                player_id=player_id,
+                season_nullable=year,
+                season_type_all_star=season_type,
+                context_measure_simple = context
+            )
+            data_json = json.loads(data.get_json())
 
-    # get the dataframe from the dictionary
-    rows = data_json["resultSets"][0]["rowSet"]
-    df = pd.DataFrame(rows)
-    df.columns = data_json["resultSets"][0]["headers"]
-    return df
+            # get the dataframe from the dictionary
+            rows = data_json["resultSets"][0]["rowSet"]
+            # add new data to dataframe if data exists
+            if rows:
+                df = pd.DataFrame(rows)
+                df.columns = data_json["resultSets"][0]["headers"]
+                list_df.append(df)
+    return pd.concat(list_df)
 
-def draw_court(d, color = "black"):
+def shot_chart(d, basic_or_expected, color = "black"):
     """
     inputs:
         d: dataframe, which will be generated from the function get_df
+        basic_or_expected: str, "basic" plots shots and displayed percentage, "expected" shows
+            expected value
         color: color of the text
     output:
-        shot chart, which is a matplotlib plot
+        shot chart of all shots, which is a matplotlib plot
     """
     # dimensions of court found using NBA rule book
     # https://official.nba.com/rule-no-1-court-dimensions-equipment/
@@ -95,40 +105,50 @@ def draw_court(d, color = "black"):
             d_make = d[(d["SHOT_MADE_FLAG"] == 1) & (d["SHOT_ZONE_BASIC"] == dis)]
             d_miss = d[(d["SHOT_MADE_FLAG"] == 0) & (d["SHOT_ZONE_BASIC"] == dis)]
         if len(d_make)+len(d_miss) != 0:
-            # scatter shots on chart
-            plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
-            plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
-            # add percentage in each zone of interest
-            # the text shows up where the avaerage shot in that zone was taken from
-            plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
-                pd.concat([d_make, d_miss])["LOC_Y"].mean(),
-                    str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
-                        color = color, fontsize = 12.0, fontweight = "bold")
-    
+            if basic_or_expected == "basic":
+                # scatter shots on chart
+                plt.scatter(d_make["LOC_X"], d_make["LOC_Y"], alpha = .2, color = "green")
+                plt.scatter(d_miss["LOC_X"], d_miss["LOC_Y"], alpha = .1, color = "red")
+                # add percentage in each zone of interest
+                # the text shows up where the average shot in that zone was taken from
+                plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
+                    pd.concat([d_make, d_miss])["LOC_Y"].mean(),
+                        str(round(100*len(d_make)/(len(d_make)+len(d_miss)),1)) + "%",
+                            color = color, fontsize = 12.0, fontweight = "bold")
+            elif basic_or_expected == "expected":
+                # find expected value of shot attempt in each zone of interest
+                if "3" in dis:
+                    points = 3
+                else:
+                    points = 2
+                plt.text(pd.concat([d_make, d_miss])["LOC_X"].mean(),
+                    pd.concat([d_make, d_miss])["LOC_Y"].mean(),
+                        str(round(points*len(d_make)/(len(d_make)+len(d_miss)),2)),
+                            color = color, fontsize = 12.0, fontweight = "bold")
     plt.show()
 
 
-jp_id = get_player_id("kyrie irving")
+if __name__ == '__main__':
+    jp_id = get_player_id("stephen curry")
 
-d = get_df(jp_id, "2022-23", "Regular Season", "FGA")
+    d = get_df(jp_id, ["2021-22", "2022-23"], ["Regular Season", "Playoffs"], "FGA")
 
-print(d)
+    print(d)
 
-print(d["LOC_Y"])
-print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
-print(d["SHOT_MADE_FLAG"])
-print(set(d["SHOT_ZONE_BASIC"]))
-print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
-print(players.find_players_by_full_name("jordan poole"))
+    print(d["LOC_Y"])
+    print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
+    print(d["SHOT_MADE_FLAG"])
+    print(set(d["SHOT_ZONE_BASIC"]))
+    print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
+    print(players.find_players_by_full_name("jordan poole"))
 
-draw_court(d)
+    shot_chart(d, "expected")
 
-# ideas...
-# make zones uniform
-# use player index to find height
-# percentage by location, defender (height??), home vs away (lots of players), assisted vs not
-# open vs contested, time left in game, regular season vs playoffs
-# option for lots of seasons, both reg and playoffs (all data)!!! (do this first)
-# compared to league avgs!!! - remember this is in data
-# analyze teams in this way
-# ... have a ton of functions that perform different analysis
+    # ideas...
+    # graph by shot distance!!
+    # w/l, home/road, clutch time, regular season/playoffs
+    # expected value by location
+    # where is data on closest defender??
+    # compared to league avgs!!! - remember this is in data
+    # analyze teams in this way
+    # ... have a ton of functions that perform different analysis
