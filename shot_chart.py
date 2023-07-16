@@ -26,7 +26,8 @@ def get_player_id(player_name):
     else:
         return -1
 
-def get_df_all_shots(player_id, years, season_types, context, team_id = 0):
+def get_df_all_shots(player_id, years, season_types, context, team_id = 0, outcome = None,
+    location = None, clutch = None):
     """
     inputs:
         team_id: int, default is 0 (looks at all shots player takes no matter team they are on)
@@ -35,6 +36,9 @@ def get_df_all_shots(player_id, years, season_types, context, team_id = 0):
         regular_or_post_season: list of str, either "Regular Season", "Playoffs", "Pre Season"
             or "All Star"
         context: str, see shotchartdetail github documentation
+        outcome: default None (gets all shots), str "W" or "L" for shots in wins vs losses
+        location: default None (gets all shots), str "Home" or "Road" for shots in home vs road
+        clutch: default None (gets all shots), str, see documentation for options
     output:
         json file containing requested data
     """
@@ -49,7 +53,10 @@ def get_df_all_shots(player_id, years, season_types, context, team_id = 0):
                 player_id=player_id,
                 season_nullable=year,
                 season_type_all_star=season_type,
-                context_measure_simple = context
+                context_measure_simple=context,
+                outcome_nullable=outcome,
+                location_nullable=location,
+                clutch_time_nullable=clutch
             )
             data_json = json.loads(data.get_json())
 
@@ -127,32 +134,52 @@ def shot_chart(d, basic_or_expected, color = "black"):
                             color = color, fontsize = 12.0, fontweight = "bold")
     plt.show()
 
-def graph_setup(d):
+
+def graph_setup(dfs, colors):
     """
+    inputs:
+        dfs: list of dataframes
+        colors: list of colors corresponding to color of dataframe data on scatterplot
+    output:
+        graph displaying a plot of distance from basket vs shot percentage for all of the
+        input shot dataframes
     """
-    # two dataframes (inputted from other functions...h/a, w/l, etc)
-    # for each
-    # for loop, loop through disctances, calculaate percentage, and add to plot
+    # loop through dataframes
+    for i, df in enumerate(dfs):
+        # for each distance, plot shot percentage
+        for distance in set(df["SHOT_DISTANCE"]):
+            d_make = df[(df["SHOT_MADE_FLAG"] == 1) & (df["SHOT_DISTANCE"] == distance)]
+            d_miss = df[(df["SHOT_MADE_FLAG"] == 0) & (df["SHOT_DISTANCE"] == distance)]
+            if len(d_make)+len(d_miss) != 0:
+                pct = len(d_make)/(len(d_make) + len(d_miss))
+                plt.scatter(distance, pct, color = colors[i])
     plt.show()
-    print(set(d["SHOT_DISTANCE"]))
 
 
 if __name__ == '__main__':
-    jp_id = get_player_id("jordan poole")
+    jp_id = get_player_id("stephen curry")
 
-    d = get_df_all_shots(jp_id, ["2021-22", "2022-23"], ["Regular Season", "Playoffs"], "FGA")
+    d = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
+        ["Regular Season", "Playoffs"], "FGA")
 
-    print(d)
+    # print(d)
 
-    print(d["LOC_Y"])
-    print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
-    print(d["SHOT_MADE_FLAG"])
-    print(set(d["SHOT_ZONE_BASIC"]))
-    print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
-    print(players.find_players_by_full_name("jordan poole"))
+    # print(d["LOC_Y"])
+    # print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
+    # print(d["SHOT_MADE_FLAG"])
+    # print(set(d["SHOT_ZONE_BASIC"]))
+    # print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
+    # print(players.find_players_by_full_name("jordan poole"))
+
+    d1 = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
+        ["Regular Season", "Playoffs"], "FGA", outcome = "W")
+    d2 = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
+        ["Regular Season", "Playoffs"], "FGA", outcome = "L")
 
     shot_chart(d, "expected")
-    graph_setup(d)
+    graph_setup([d1, d2], ["green", "red"])
+
+    # graph_setup(d)
 
     # ideas...
     # graph by shot distance!!
