@@ -135,14 +135,16 @@ def shot_chart(d, basic_or_expected, color = "black"):
     plt.show()
 
 
-def graph_setup(dfs, colors):
+def graph_setup(dfs, colors, basic_or_expected):
     """
     inputs:
         dfs: list of dataframes
         colors: list of colors corresponding to color of dataframe data on scatterplot
+        basic_or_expected: str, "basic" plots shots and displayed percentage, "expected" shows
+            expected value
     output:
-        graph displaying a plot of distance from basket vs shot percentage for all of the
-        input shot dataframes
+        graph displaying a plot of distance from basket vs shot percentage/expected value
+        for all of the input shot dataframes
     """
     # loop through dataframes
     for i, df in enumerate(dfs):
@@ -151,8 +153,26 @@ def graph_setup(dfs, colors):
             d_make = df[(df["SHOT_MADE_FLAG"] == 1) & (df["SHOT_DISTANCE"] == distance)]
             d_miss = df[(df["SHOT_MADE_FLAG"] == 0) & (df["SHOT_DISTANCE"] == distance)]
             if len(d_make)+len(d_miss) != 0:
-                pct = len(d_make)/(len(d_make) + len(d_miss))
-                plt.scatter(distance, pct, color = colors[i])
+                # calculate percentage
+                if basic_or_expected == "basic":
+                    pct = len(d_make)/(len(d_make) + len(d_miss))
+                    plt.scatter(distance, pct, color = colors[i])
+                # calculate expected value
+                elif basic_or_expected == "expected":
+                    d_make3 = d_make[["3" in c for c in list(d_make["SHOT_ZONE_BASIC"])]]
+                    d_miss3 = d_miss[["3" in c for c in list(d_miss["SHOT_ZONE_BASIC"])]]
+                    d_make2 = d_make[["3" not in c for c in list(d_make["SHOT_ZONE_BASIC"])]]
+                    d_miss2 = d_miss[["3" not in c for c in list(d_miss["SHOT_ZONE_BASIC"])]]
+                    if len(d_make3) + len(d_miss3) > 0 and len(d_make2) + len(d_miss2) > 0:
+                        exp_val = 3 * len(d_make3)/(len(d_make3) + len(d_miss3))\
+                            * (len(d_make3) + len(d_miss3))/(len(d_make) + len(d_miss))\
+                                + 2 * len(d_make2)/(len(d_make2) + len(d_miss2))\
+                                    * (len(d_make2) + len(d_miss2))/(len(d_make) + len(d_miss))
+                    elif len(d_make3) + len(d_miss3) > 0:
+                        exp_val = 3 * len(d_make3)/(len(d_make3) + len(d_miss3))
+                    elif len(d_make2) + len(d_miss2) > 0:
+                        exp_val = 2 * len(d_make2)/(len(d_make2) + len(d_miss2))
+                    plt.scatter(distance, exp_val, color = colors[i])        
     plt.show()
 
 
@@ -162,22 +182,17 @@ if __name__ == '__main__':
     d = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
         ["Regular Season", "Playoffs"], "FGA")
 
-    # print(d)
-
-    # print(d["LOC_Y"])
-    # print(d["LOC_X"], set(d["SHOT_ZONE_AREA"]))
-    # print(d["SHOT_MADE_FLAG"])
-    # print(set(d["SHOT_ZONE_BASIC"]))
-    # print(set(d["SHOT_ZONE_BASIC"]).difference(set("In The Paint (Non-RA)")))
-    # print(players.find_players_by_full_name("jordan poole"))
-
     d1 = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
         ["Regular Season", "Playoffs"], "FGA", outcome = "W")
     d2 = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
         ["Regular Season", "Playoffs"], "FGA", outcome = "L")
 
+    d3 = get_df_all_shots(jp_id, ["2020-21", "2021-22", "2022-23"],
+        ["Regular Season", "Playoffs"], "FGA", clutch = "Last 5 Minutes")
+
     shot_chart(d, "expected")
-    graph_setup([d1, d2], ["green", "red"])
+    graph_setup([d1, d2], ["green", "red"], "expected")
+    graph_setup([d, d3], ["green", "red"], "expected")
 
     # graph_setup(d)
 
@@ -188,4 +203,3 @@ if __name__ == '__main__':
     # where is data on closest defender??
     # compared to league avgs!!! - remember this is in data
     # analyze teams in this way
-    # ... have a ton of functions that perform different analysis
