@@ -25,6 +25,12 @@ def generate_df(url, headers):
     return df
 
 if __name__ == '__main__':
+    # the NBA is hard to analyze because of the talent differential between teams and the
+    # lack of effort by players during the regular season
+    # for our analysis, we will focus on the Milwaukee Bucks playoff performance over a
+    # period of years where their core roster has remained largely intact
+    # hopefully, this provides some insight on the key drivers of what wins games
+    # measure relationship between stat and playoff winning percentage
     url = "https://stats.nba.com/stats/leaguedashteamptshot?CloseDefDistRange=&College=&Conference=&Country=&DateFrom=&DateTo=&Division=&DraftPick=&DraftYear=&DribbleRange=&GameScope=&GameSegment=&GeneralRange=&Height=&LastNGames=0&LeagueID=00&Location=&Month=0&OpponentTeamID=0&Outcome=&PORound=0&PaceAdjust=N&PerMode=PerGame&Period=0&PlayerExperience=&PlayerPosition=&PlusMinus=N&Rank=N&Season=2022-23&SeasonSegment=&SeasonType=Regular%20Season&ShotClockRange=7-4%20Late&ShotDistRange=&StarterBench=&TeamID=0&TouchTimeRange=&VsConference=&VsDivision=&Weight="
     headers = {"Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br",
