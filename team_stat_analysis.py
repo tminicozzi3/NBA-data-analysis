@@ -1,4 +1,5 @@
 # this code pulls data from the stats page on NBA.com
+# 
 # team stats of interest...
 # general -> scoring (others too?), playtype, tracking, shot dashboard, shooting, hustle
 
@@ -8,7 +9,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-def get_url(team_id, year):
+def get_url_pct_shots(team_id, year):
     """
     inputs:
         team_id: str, id of team, "0" if want all teams
@@ -21,6 +22,40 @@ def get_url(team_id, year):
     url = "https://stats.nba.com/stats/leaguedashteamstats?Conference=&DateFrom=&DateTo="+\
     "&Division=&GameScope=&GameSegment=&Height=&LastNGames=0&LeagueID=00&Location="+\
     "&MeasureType=Scoring&Month=0&OpponentTeamID=0&Outcome=&PORound=0&PaceAdjust=N"+\
+    "&PerMode=PerGame&Period=0&PlayerExperience=&PlayerPosition=&PlusMinus=N&Rank=N"+\
+    "&Season="+year+"&SeasonSegment=&SeasonType=Playoffs&ShotClockRange=&StarterBench="+\
+    "&TeamID="+team_id+"&TwoWay=0&VsConference=&VsDivision="
+    return url
+
+def get_url_four_factors(team_id, year):
+    """
+    inputs:
+        team_id: str, id of team, "0" if want all teams
+        year: str, year you want to observe stats for
+    output:
+        url: the url for the data you want
+    """
+    # this url is for the four factors stats page
+    url = "https://stats.nba.com/stats/leaguedashteamstats?Conference=&DateFrom=&DateTo="+\
+    "&Division=&GameScope=&GameSegment=&Height=&LastNGames=0&LeagueID=00&Location="+\
+    "&MeasureType=Four%20Factors&Month=0&OpponentTeamID=0&Outcome=&PORound=0&PaceAdjust=N"+\
+    "&PerMode=PerGame&Period=0&PlayerExperience=&PlayerPosition=&PlusMinus=N&Rank=N"+\
+    "&Season="+year+"&SeasonSegment=&SeasonType=Playoffs&ShotClockRange=&StarterBench="+\
+    "&TeamID="+team_id+"&TwoWay=0&VsConference=&VsDivision="
+    return url
+
+def get_url_advanced(team_id, year):
+    """
+    inputs:
+        team_id: str, id of team, "0" if want all teams
+        year: str, year you want to observe stats for
+    output:
+        url: the url for the data you want
+    """
+    # this url is for the advanced stats page
+    url = "https://stats.nba.com/stats/leaguedashteamstats?Conference=&DateFrom=&DateTo="+\
+    "&Division=&GameScope=&GameSegment=&Height=&LastNGames=0&LeagueID=00&Location="+\
+    "&MeasureType=Advanced&Month=0&OpponentTeamID=0&Outcome=&PORound=0&PaceAdjust=N"+\
     "&PerMode=PerGame&Period=0&PlayerExperience=&PlayerPosition=&PlusMinus=N&Rank=N"+\
     "&Season="+year+"&SeasonSegment=&SeasonType=Playoffs&ShotClockRange=&StarterBench="+\
     "&TeamID="+team_id+"&TwoWay=0&VsConference=&VsDivision="
@@ -72,6 +107,7 @@ def generate_all_data_df(urls, years):
         new_df = generate_df(url, year)
         # add that df to the all years df
         df = pd.concat([df, new_df], axis = 0)
+    df = df.drop(columns=[c for c in df.columns if "RANK" in c])
     return df
 
 def calc_r2(df):
@@ -82,8 +118,9 @@ def calc_r2(df):
         lst_r2: list of tuple...(stat, r2 value of stat wrt win pct)
     """
     # stats of interest
-    metrics = [c for c in df.columns if ("PCT" in c and c != "W_PCT")]
-    lst_r2 = []
+    metrics = [c for c in df.columns
+        if (c not in ["TEAM_ID", "TEAM_NAME", "GP", "W", "L", "W_PCT", "MIN", "YEAR"])]
+    dict_r2 = {}
     # loop through stats
     for metric in metrics:
         # create a linear regression model with appropriate data
@@ -91,22 +128,25 @@ def calc_r2(df):
         X, y = np.array(df[metric]).reshape(-1, 1), np.array(df["W_PCT"])
         model.fit(X, y)
         # find r2 value and add to list
-        lst_r2.append((metric, round(model.score(X, y), 3)))
-    return lst_r2
+        dict_r2[metric] = round(model.score(X, y), 3)
+    return dict_r2
 
 if __name__ == '__main__':
     # the NBA is hard to analyze because of the talent and style differential between teams
     # and the lack of effort by players during the regular season
     # for our analysis, we will focus on the Milwaukee Bucks playoff performance over a
     # period of years where their core roster has remained largely intact
-    # hopefully, this provides some insight on the key drivers of what wins games
-    # measure relationship between stat and playoff winning percentage
+    # hopefully, this provides some insight on the key drivers of what wins playoff games
+    # (for the Milwaukee Bucks)
+    # use Linear Regression to measure relationship between stat and playoff winning percentage
     milwaukee_id = "1610612749"
     years = ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22", "2022-23"]
-    urls = [get_url(milwaukee_id, year) for year in years]
-    d = generate_all_data_df(urls, years)
-    d = d.drop(columns=[c for c in d.columns if "RANK" in c])
-    # print(d)
-    # print(d.columns)
-    # print(list(d["W_PCT"]))
-    print(calc_r2(d))
+    urls1 = [get_url_pct_shots(milwaukee_id, year) for year in years]
+    d1 = generate_all_data_df(urls1, years)
+    urls2 = [get_url_advanced(milwaukee_id, year) for year in years]
+    d2 = generate_all_data_df(urls2, years)
+    urls3 = [get_url_four_factors(milwaukee_id, year) for year in years]
+    d3 = generate_all_data_df(urls3, years)
+
+    for d in [d1,d2,d3]:
+        print(sorted(calc_r2(d).items(), key = lambda x: x[1], reverse = True))
