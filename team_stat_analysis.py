@@ -110,6 +110,20 @@ def generate_all_data_df(urls, years):
     df = df.drop(columns=[c for c in df.columns if "RANK" in c])
     return df
 
+def merge_dfs(lst_dfs):
+    """
+    input:
+        lst_dfs: the list of 
+    output:
+        df: dataframe with data from url over all years
+    """
+    df = lst_dfs[0]
+    for d in lst_dfs[1:]:
+        d = d.drop(columns = [c for c in df.columns if c in
+            ["TEAM_ID", "TEAM_NAME", "GP", "W", "L", "W_PCT", "MIN"]])
+        df = pd.merge(df, d, on = "YEAR")
+    return df
+
 def calc_r2(df):
     """
     input:
@@ -148,5 +162,8 @@ if __name__ == '__main__':
     urls3 = [get_url_four_factors(milwaukee_id, year) for year in years]
     d3 = generate_all_data_df(urls3, years)
 
-    for d in [d1,d2,d3]:
-        print(sorted(calc_r2(d).items(), key = lambda x: x[1], reverse = True))
+    # for d in [d1,d2,d3]:
+    #     print(sorted(calc_r2(d).items(), key = lambda x: x[1], reverse = True))
+
+    df = merge_dfs([d1,d2,d3])
+    print(sorted(calc_r2(df).items(), key = lambda x: x[1], reverse = True))
